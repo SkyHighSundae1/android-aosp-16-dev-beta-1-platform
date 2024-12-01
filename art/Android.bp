@@ -1,0 +1,62 @@
+// If you're looking for ART global stuff, please see build/Android.bp.
+
+package {
+    default_visibility: ["//art:__subpackages__"],
+    default_applicable_licenses: ["art_license"],
+}
+
+license {
+    name: "art_license",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "SPDX-license-identifier-Apache-2.0",
+        "SPDX-license-identifier-BSD",
+    ],
+    license_text: [
+        "NOTICE",
+    ],
+}
+
+// The art-tools package depends on helpers and tools that are useful for
+// developers. Similar dependencies exist for the APEX builds for these tools
+// (see build/apex/Android.bp).
+phony {
+    name: "art-tools",
+    // If the dependencies have changed, please sync them to
+    // build/core/target/product/base_system.mk as well.
+    required: [
+        "ahat",
+        "dexdump",
+        "hprof-conv",
+        // A subset of the tools are disabled when HOST_PREFER_32_BIT is
+        // defined as make reports that they are not supported on host
+        // (b/129323791). This is likely due to art_apex disabling host APEX
+        // builds when HOST_PREFER_32_BIT is set (b/120617876).
+    ] + select(soong_config_variable("art_module", "host_prefer_32_bit"), {
+        true: [],
+        default: [
+            "dexlist",
+            "oatdump",
+        ],
+    }),
+}
+
+// Fake packages to ensure generation of libopenjdkd when one builds with mm/mmm/mmma.
+//
+// The library is required for starting a runtime in debug mode, but libartd does not depend on it
+// (dependency cycle otherwise).
+//
+// Note: * As the package is phony to create a dependency the package name is irrelevant.
+//       * We make MULTILIB explicit to "both," just to state here that we want both libraries on
+//         64-bit systems, even if it is the default.
+phony_rule {
+    name: "art-libartd-libopenjdkd-host-dependency",
+    phony_deps: [
+        "libopenjdkd",
+    ],
+    compile_multilib: "both",
+    enabled: select(soong_config_variable("art_module", "art_build_host_debug"), {
+        false: false,
+        default: true,
+    }),
+}
