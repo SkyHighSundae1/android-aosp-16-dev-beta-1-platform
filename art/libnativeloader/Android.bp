@@ -1,0 +1,205 @@
+// Shared library for target
+// ========================================================
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "art_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["art_license"],
+    default_team: "trendy_team_art_mainline",
+}
+
+cc_library_headers {
+    name: "libnativeloader-headers",
+    defaults: ["art_defaults"],
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.art",
+        "com.android.art.debug",
+        "com.android.media",
+    ],
+    visibility: [
+        "//art:__subpackages__",
+        // TODO(b/133140750): Clean this up.
+        "//frameworks/av/media/libstagefright",
+        "//frameworks/native/libs/graphicsenv",
+        "//frameworks/native/vulkan/libvulkan",
+    ],
+    host_supported: true,
+    export_include_dirs: ["include"],
+    header_libs: ["jni_headers"],
+    export_header_lib_headers: ["jni_headers"],
+}
+
+cc_defaults {
+    name: "libnativeloader-defaults",
+    defaults: ["art_defaults"],
+    host_supported: true,
+    srcs: [
+        "native_loader.cpp",
+    ],
+    header_libs: [
+        "art_libartbase_headers",
+        "libnativehelper_header_only",
+        "libnativeloader-headers",
+    ],
+    export_header_lib_headers: ["libnativeloader-headers"],
+    shared_libs: [
+        "libnativebridge#impl",
+    ],
+    target: {
+        android: {
+            srcs: [
+                "library_namespaces.cpp",
+                "native_loader_namespace.cpp",
+                "public_libraries.cpp",
+            ],
+            shared_libs: [
+                "libdl_android",
+            ],
+            static_libs: [
+                "libPlatformProperties",
+                "libmodules-utils-build",
+            ],
+        },
+    },
+}
+
+art_cc_library {
+    name: "libnativeloader",
+    defaults: ["libnativeloader-defaults"],
+    shared_libs: [
+        "libbase",
+        "liblog",
+    ],
+    visibility: [
+        "//frameworks/base/cmds/app_process",
+        // TODO(b/133140750): Clean this up.
+        "//frameworks/base/native/webview/loader",
+    ],
+    apex_available: [
+        "com.android.art",
+        "com.android.art.debug",
+        "test_broken_com.android.art",
+    ],
+    stubs: {
+        symbol_file: "libnativeloader.map.txt",
+        versions: ["1"],
+    },
+}
+
+// Wrapper that loads nativeloader.so lazily, to be used to deal with layer
+// inversion in places like in early boot where libnativeloader and/or
+// libnativebridge aren't available.
+// TODO(b/124250621) eliminate the need for this library
+cc_library_shared {
+    name: "libnativeloader_lazy",
+    defaults: ["art_defaults"],
+    visibility: [
+        "//frameworks/base/core/jni",
+        "//frameworks/native/opengl/libs",
+        "//frameworks/native/vulkan/libvulkan",
+    ],
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.media",
+        "com.android.media.swcodec",
+    ],
+    host_supported: false,
+    srcs: ["native_loader_lazy.cpp"],
+    runtime_libs: ["libnativeloader"],
+    shared_libs: ["liblog"],
+    header_libs: ["libnativeloader-headers"],
+    export_header_lib_headers: ["libnativeloader-headers"],
+
+    // Apply the libnativeloader stub symbol file to the exported symbols from
+    // this shim library, to ensure that any symbols exposed here are also
+    // available as an exported API.
+    version_script: "libnativeloader.map.txt",
+}
+
+// native_loader_test.cpp mocks functions from libdl_android and
+// libnativebridge, so those have to be linked dynamically and this test binary
+// needs to export symbols to override them.
+art_cc_test {
+    name: "libnativeloader_test",
+    defaults: [
+        // Cannot use art_standalone_gtest_defaults because it makes us link
+        // libnativebridge statically through libart-gtest.
+        "art_standalone_test_defaults",
+        "libnativeloader-defaults",
+    ],
+    host_supported: false,
+
+    // Ordinarily, symbols are only exported if they are referenced by some
+    // shared object dependency. Instead, export everything using
+    // --export-dynamic, then restrict the visibility using the version script.
+    ldflags: ["-Wl,--export-dynamic"],
+    version_script: "libnativeloader_test.map",
+
+    header_libs: [
+        "libnativebridge-headers",
+        "libnativehelper_header_only",
+    ],
+    shared_libs: [
+        "liblog", // libbase dependency
+    ],
+    static_libs: [
+        "libbase",
+        "libgmock",
+    ],
+
+    tidy_timeout_srcs: [
+        "native_loader_test.cpp",
+    ],
+    srcs: [
+        "library_namespaces_test.cpp",
+        "native_loader_api_test.c",
+        "native_loader_test.cpp",
+    ],
+
+    test_suites: [
+        "general-tests",
+        "mts-art",
+    ],
+}
+
+cc_defaults {
+    name: "libnativeloader_api_test_defaults",
+    defaults: ["art_standalone_test_defaults"],
+
+    srcs: ["native_loader_api_test.cpp"],
+    header_libs: [
+        "libnativebridge-headers",
+        "libnativehelper_header_only",
+    ],
+    static_libs: [
+        "libbase",
+        "libgmock",
+    ],
+}
+
+art_cc_test {
+    name: "art_libnativeloader_cts_test",
+    defaults: ["libnativeloader_api_test_defaults"],
+    shared_libs: [
+        "libnativeloader",
+    ],
+    test_config_template: ":art-gtests-target-standalone-cts-template",
+    test_suites: [
+        "cts",
+        "mcts-art",
+    ],
+}
+
+art_cc_test {
+    name: "libnativeloader_lazy_test",
+    defaults: ["libnativeloader_api_test_defaults"],
+    shared_libs: ["libnativeloader_lazy"],
+    data_libs: ["libnativeloader_lazy"],
+    test_suites: [
+        "general-tests",
+        "mts-art",
+    ],
+}
