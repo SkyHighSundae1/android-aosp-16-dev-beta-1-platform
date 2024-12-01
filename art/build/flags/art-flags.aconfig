@@ -1,0 +1,54 @@
+# Copyright (C) 2024 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+package: "com.android.art.flags"
+container: "com.android.art"
+
+# Flag for the experimental feature of on-demand method tracing
+flag {
+  name: "always_enable_profile_code"
+  namespace: "art_performance"
+  description: "Flag to control on-demand method tracing feature"
+  bug: "352518093"
+  is_fixed_read_only: true
+  is_exported: true
+}
+
+# TODO(b/352723620): Ramp this fully, then add tests with it.
+flag {
+  name: "test"
+  namespace: "art_mainline"
+  description: "Permanent test flag."
+  bug: "352723620"
+  is_fixed_read_only: true
+  is_exported: false
+}
+
+flag {
+  namespace: "system_performance"
+  name: "executable_method_file_offsets"
+  is_exported: true
+  description: "This flag includes the API for getting the compiled native executable offset info for a java method"
+  bug: "296108553"
+  is_fixed_read_only: true
+}
+
+flag {
+  name: "art_service_v3"
+  namespace: "art_mainline"
+  description: "Flag for all new ART Service APIs added in the 25Q2 version of the ART module."
+  bug: "373820009"
+  is_fixed_read_only: true
+  is_exported: true
+}

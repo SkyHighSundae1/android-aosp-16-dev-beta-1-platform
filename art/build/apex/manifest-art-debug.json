@@ -1,0 +1,17 @@
+{
+  // LINT.IfChange
+  "name": "com.android.art",
+
+  // High version number that ensures that packages using this manifest (Debug
+  // ART APEX, Testing ART APEX) can be installed on virtually all Android
+  // dessert releases.
+  "version": 990091000,
+
+  "provideNativeLibs": [
+    "libjdwp.so"
+  ],
+  "requireNativeLibs": [
+    "libicu_jni.so"
+  ]
+  // LINT.ThenChange(manifest-art.json)
+}
