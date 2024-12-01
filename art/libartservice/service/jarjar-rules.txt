@@ -1,0 +1,8 @@
+# Repackages static libraries to make them private to ART Services.
+rule android.content.pm.CustomFeatureFlags com.android.server.art.jarjar.@0
+rule android.content.pm.FakeFeatureFlagsImpl com.android.server.art.jarjar.@0
+rule android.content.pm.FeatureFlags com.android.server.art.jarjar.@0
+rule android.content.pm.FeatureFlagsImpl com.android.server.art.jarjar.@0
+rule android.content.pm.Flags com.android.server.art.jarjar.@0
+rule com.android.modules.utils.** com.android.server.art.jarjar.@0
+rule com.google.protobuf.** com.android.server.art.jarjar.@0

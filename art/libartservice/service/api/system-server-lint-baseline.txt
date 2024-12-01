@@ -1,0 +1,3 @@
+// Baseline format: 1.0
+DeprecationMismatch: com.android.server.art.ArtManagerLocal#ArtManagerLocal():
+    Constructor com.android.server.art.ArtManagerLocal.ArtManagerLocal(): @Deprecated annotation (present) and @deprecated doc tag (not present) do not match
